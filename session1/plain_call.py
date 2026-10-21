@@ -6,6 +6,8 @@ the rest of the course exists.
 
     python plain_call.py
 """
+import os
+
 from dotenv import load_dotenv, find_dotenv
 from groq import Groq
 
@@ -13,7 +15,9 @@ from groq import Groq
 # so load the .env first. Forgetting this line is the most common Session 1 error.
 load_dotenv(find_dotenv(usecwd=True))
 
-MODEL = "openai/gpt-oss-120b"
+MODEL = (os.getenv("LLM_MODEL", "").strip()
+         or os.getenv("GROQ_MODEL", "").strip()
+         or "openai/gpt-oss-120b")
 client = Groq()
 
 
