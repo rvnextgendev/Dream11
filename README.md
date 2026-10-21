@@ -30,6 +30,23 @@ cp .env.example .env
 
 ## Run
 
+For Streamlit Cloud, open **Manage app → Settings → Secrets** and enter TOML
+(one setting per line, without trailing backslashes):
+
+```toml
+LLM_PROVIDER = "groq"
+LLM_MODEL = "qwen/qwen3.8-27b"
+GROQ_API_KEY = "your_new_groq_api_key"
+```
+
+The same settings work in a local `.env`. `LLM_MODEL` takes precedence over
+`GROQ_MODEL`; if neither is set, the app uses `openai/gpt-oss-120b`.
+Never commit keys. Replace any key shared in chat or logs.
+
+If Groq returns 403, check the model permissions for both your organization and
+project in the Groq console. Organization restrictions override project settings.
+Changing the app code cannot grant account permissions.
+
 ```bash
 # offline sanity check (no key needed) — tests tools + schema
 python test_offline.py

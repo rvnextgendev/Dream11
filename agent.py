@@ -26,7 +26,14 @@ load_dotenv(find_dotenv(usecwd=True))
 # Groq (free tier) with LangGraph. openai/gpt-oss-120b is Groq's flagship
 # tool-use model. Override via GROQ_MODEL (e.g. "openai/gpt-oss-20b" for speed).
 # Needs GROQ_API_KEY in the environment — get a free key at https://console.groq.com/keys
-MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
+def model_name() -> str:
+    """Read settings at call time, after Streamlit secrets are loaded."""
+    provider = os.getenv("LLM_PROVIDER", "groq").strip().lower()
+    if provider != "groq":
+        raise ValueError("This app supports LLM_PROVIDER='groq' only.")
+    return (os.getenv("LLM_MODEL", "").strip()
+            or os.getenv("GROQ_MODEL", "").strip()
+            or "openai/gpt-oss-120b")
 
 # NOTE: describe the tools in plain prose, NOT as `name(args)` — showing
 # function-call syntax makes some models imitate it as text and break tool-calling.
@@ -61,8 +68,11 @@ strategy. Back the picks the data supports, not big names who are out of form.
 # a long run; the Groq SDK honours the retry-after header, so raising this simply
 # waits out the window instead of failing the whole run.
 def _llm(temperature: float = 0.2, **kwargs) -> ChatGroq:
+    model = model_name()
+    if not os.getenv("GROQ_API_KEY", "").strip():
+        raise ValueError("Set GROQ_API_KEY in your .env or Streamlit app secrets.")
     kwargs.setdefault("max_retries", 8)
-    return ChatGroq(model=MODEL, temperature=temperature, **kwargs)
+    return ChatGroq(model=model, temperature=temperature, **kwargs)
 
 
 def build_agent():
@@ -98,8 +108,7 @@ def pick_team(match: str, verbose: bool = False) -> Team:
     #   strict=True — turn on CONSTRAINED DECODING, so the model literally cannot
     #     emit off-schema text. Without it, schema adherence is only best-effort
     #     and a long nested payload like Team can come back json_validate_failed.
-    # Strict mode is Groq-side and only exists on openai/gpt-oss-*; on other
-    # models it is silently ignored. That is why this course pins gpt-oss-120b.
+    # Use a model that supports strict output, such as GPT-OSS or Qwen 3.8 27B.
     # reasoning_effort="low" + max_tokens matter here, and for a reason worth
     # understanding. gpt-oss-120b is a REASONING model: it spends output tokens
     # thinking before it writes. Step 3 below hands it a genuine constraint puzzle
