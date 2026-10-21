@@ -72,6 +72,11 @@ def _llm(temperature: float = 0.2, **kwargs) -> ChatGroq:
     if not os.getenv("GROQ_API_KEY", "").strip():
         raise ValueError("Set GROQ_API_KEY in your .env or Streamlit app secrets.")
     kwargs.setdefault("max_retries", 8)
+    # Qwen accounts can have a separate 1,000 output-token/minute ceiling.
+    # Cap every call, including the structured-output call's larger budget.
+    if model == "qwen/qwen3.8-27b":
+        kwargs["max_tokens"] = min(kwargs.get("max_tokens", 900), 900)
+        kwargs.setdefault("reasoning_effort", "low")
     return ChatGroq(model=model, temperature=temperature, **kwargs)
 
 

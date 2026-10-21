@@ -23,7 +23,12 @@ client = Groq()
 
 def ask_llm(messages: list[dict]) -> str:
     """One model call in, one string out. Used by toy_agent.py too."""
-    resp = client.chat.completions.create(model=MODEL, messages=messages)
+    # Keep the requested output below accounts with a 1,000 OTPM ceiling.
+    resp = client.chat.completions.create(
+        model=MODEL, messages=messages, max_completion_tokens=900,
+    )
+    if resp.choices[0].finish_reason == "length":
+        raise ValueError("The response reached the 900-token limit. Ask for a shorter answer.")
     return resp.choices[0].message.content
 
 

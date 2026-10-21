@@ -14,6 +14,9 @@ class ConfigTests(unittest.TestCase):
         }, clear=True), patch("agent.ChatGroq") as chat:
             _llm()
             self.assertEqual(chat.call_args.kwargs["model"], "qwen/qwen3.8-27b")
+            self.assertEqual(chat.call_args.kwargs["max_tokens"], 900)
+            _llm(max_tokens=4000)
+            self.assertEqual(chat.call_args.kwargs["max_tokens"], 900)
 
     def test_legacy_and_default_models(self):
         with patch.dict(os.environ, {"GROQ_MODEL": "legacy-model"}, clear=True):
